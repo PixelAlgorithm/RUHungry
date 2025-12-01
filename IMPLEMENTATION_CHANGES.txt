@@ -1,0 +1,310 @@
+# RU Hungry - Implementation Changes and New Features
+
+## Date: November 20, 2025
+
+---
+
+## NEW FILES CREATED
+
+### 1. order.h
+Header file for order management system
+- Defines OrderItem structure (linked list node for items in an order)
+- Defines Order structure (linked list node for complete orders)
+- Function declarations for order operations
+
+### 2. order.c
+Implementation file for order management
+- All order-related functions implemented here
+
+### 3. CMakeLists.txt
+CMake configuration file for CLion IDE
+- Project name: RUHungry
+- C Standard: C11
+- Includes all source files: main.c, menu.c, customer.c, order.c and their headers
+
+---
+
+## NEW DATA STRUCTURES
+
+### OrderItem (Linked List Node)
+```
+- char itemName[100]      : Name of menu item
+- int quantity            : Quantity ordered
+- float price             : Price per item
+- OrderItem *next         : Pointer to next item in order
+```
+
+### Order (Linked List Node)
+```
+- int orderID             : Unique order identifier (starts from 01)
+- int customerID          : ID of customer who placed order
+- OrderItem *items        : Linked list of items in this order
+- float totalAmount       : Total bill amount
+- Order *next             : Pointer to next order in transaction history
+```
+
+### SeatedCustomer (Linked List Node)
+```
+- int customerID          : Customer's unique ID
+- SeatedCustomer *next    : Pointer to next seated customer
+```
+
+---
+
+## NEW GLOBAL VARIABLES
+
+### In order.c:
+- Order *orderHead = NULL     : Head of order history linked list
+- int nextOrderID = 1         : Counter for generating order IDs
+
+### In customer.c:
+- int nextCustomerID = 1                  : Counter for generating customer IDs
+- SeatedCustomer *seatedCustomersHead     : Head of seated customers linked list
+
+---
+
+## NEW FUNCTIONS ADDED
+
+### ORDER MANAGEMENT (order.c)
+
+1. **Order* createOrder(int customerID)**
+   - Creates a new order for a customer
+   - Assigns unique order ID (auto-incremented)
+   - Initializes order with customer ID
+   - Returns pointer to new order
+
+2. **void addItemToOrder(Order *order, char itemName[], int qty, float price)**
+   - Adds an item to an existing order
+   - Creates OrderItem node and appends to order's item list
+   - Updates total amount of order
+   - Used during order placement
+
+3. **void saveOrder(Order *order)**
+   - Saves completed order to transaction history
+   - Appends order to global order linked list
+   - Maintains all orders for analytics
+
+4. **void displayOrder(Order *order)**
+   - Displays formatted order receipt
+   - Shows Order ID, Customer ID
+   - Lists all items with quantities and prices
+   - Shows line totals and grand total
+
+5. **Order* findOrder(int orderID)**
+   - Searches transaction history for specific order
+   - Takes order ID as input
+   - Returns pointer to order if found, NULL otherwise
+   - Used for order lookup feature
+
+6. **void getPopularItems(int k)**
+   - Analyzes all orders to find most popular items
+   - Counts total quantity ordered for each menu item
+   - Sorts items by popularity (insertion sort)
+   - Displays top 'k' most ordered items
+   - Shows item name and total times ordered
+
+### CUSTOMER MANAGEMENT (customer.c)
+
+7. **void addSeatedCustomer(int customerID)**
+   - Adds customer to seated customers list
+   - Creates SeatedCustomer node
+   - Inserts at head of linked list
+   - Called when customer gets seated
+
+8. **void removeSeatedCustomer(int customerID)**
+   - Removes customer from seated list
+   - Searches for customer ID
+   - Deletes node from linked list
+   - Called when customer leaves
+
+9. **int isCustomerSeated(int customerID)**
+   - Checks if customer is currently seated
+   - Searches seated customers linked list
+   - Returns 1 if seated, 0 if not
+   - Used to validate order placement
+
+10. **void displaySeatedCustomers()**
+    - Shows all currently seated customers
+    - Lists their customer IDs
+    - Helps staff track occupied seats
+
+---
+
+## MODIFIED FUNCTIONS
+
+### customer.c
+
+1. **void main_seating_algo()**
+   CHANGES:
+   - Now generates and assigns customer ID when seat is available
+   - Prints "Customer ID assigned: X" message
+   - Calls addSeatedCustomer() to track the customer
+   - Customer ID auto-increments from 1
+
+2. **void customer_leaves()**
+   CHANGES:
+   - When no queue: Asks for Customer ID input
+   - Validates if customer is actually seated
+   - Removes customer from seated list
+   - When queue exists: Assigns new ID to waiting customer getting seated
+   - Tracks customer movement properly
+
+### main.c
+
+1. **Added #include "order.h"**
+   - Includes order management functions
+
+2. **Removed print_bill() function**
+   - Replaced by displayOrder() which is more comprehensive
+
+3. **Updated Menu Display**
+   - Added menu header: "RU HUNGRY MENU"
+   - Added new options:
+     * Option 8: Find Order by ID
+     * Option 9: Get Popular Items
+     * Option 10: Show Seated Customers
+
+4. **Modified Option 7 (Place Order)**
+   MAJOR CHANGES:
+   - Now asks for Customer ID first
+   - Validates if customer is seated using isCustomerSeated()
+   - Creates Order object with createOrder()
+   - Adds each item using addItemToOrder()
+   - Saves order with saveOrder()
+   - Displays formatted receipt with displayOrder()
+   - Shows Order ID after successful placement
+   - Order ID format: 01, 02, 03... (2 digits with leading zero)
+
+5. **Added Option 8 - Find Order**
+   - Takes Order ID as input
+   - Calls findOrder() function
+   - Displays full order details if found
+   - Shows error message if not found
+
+6. **Added Option 9 - Get Popular Items**
+   - Takes 'k' value as input
+   - Calls getPopularItems(k)
+   - Shows top k most ordered items
+   - Displays order count for each item
+
+7. **Added Option 10 - Show Seated Customers**
+   - Calls displaySeatedCustomers()
+   - Lists all customers currently seated with their IDs
+
+---
+
+## HEADER FILE CHANGES
+
+### customer.h
+ADDED:
+- SeatedCustomer struct definition
+- extern int nextCustomerID
+- extern SeatedCustomer *seatedCustomersHead
+- Function declarations for:
+  * addSeatedCustomer()
+  * removeSeatedCustomer()
+  * isCustomerSeated()
+  * displaySeatedCustomers()
+
+---
+
+## KEY FEATURES IMPLEMENTED
+
+1. **Customer ID Assignment**
+   - Auto-generated when customer arrives and gets seat
+   - Starts from 1 and increments
+   - Tracked in seated customers linked list
+
+2. **Order ID System**
+   - Auto-generated when order is placed
+   - Starts from 01 (formatted with leading zero)
+   - Unique identifier for each order
+
+3. **Order Tracking System**
+   - All orders stored in linked list (transaction history)
+   - Each order contains customer ID and order details
+   - Supports order lookup by Order ID
+
+4. **Customer Validation**
+   - Only seated customers can place orders
+   - System verifies customer ID before accepting order
+
+5. **Popular Items Analytics**
+   - Analyzes entire transaction history
+   - Counts items across all orders
+   - Provides top k most ordered items
+   - Useful for inventory and menu planning
+
+6. **Seated Customer Tracking**
+   - Maintains list of all seated customers
+   - Easy lookup and display
+   - Proper addition/removal when customers arrive/leave
+
+---
+
+## DATA FLOW
+
+### When Customer Arrives:
+1. Customer ID generated (nextCustomerID++)
+2. Customer added to seatedCustomersHead linked list
+3. Available seats decremented
+
+### When Placing Order:
+1. System asks for Customer ID
+2. Validates customer is seated
+3. Creates new Order with unique Order ID
+4. Items added to order's item linked list
+5. Order saved to orderHead (transaction history)
+6. Receipt displayed with Order ID
+
+### When Customer Leaves:
+1. System asks for Customer ID (if no queue)
+2. Customer removed from seated list
+3. Seat becomes available
+
+### Finding Order:
+1. User provides Order ID
+2. System traverses orderHead linked list
+3. Matches orderID and displays details
+
+### Popular Items:
+1. System traverses all orders in orderHead
+2. Counts each item's total quantity
+3. Sorts by count (descending)
+4. Displays top k items
+
+---
+
+## LINKED LISTS USED
+
+1. **Order History** (orderHead)
+   - Stores all placed orders
+   - Order → Order → Order → NULL
+
+2. **Items in Each Order** (order->items)
+   - OrderItem → OrderItem → OrderItem → NULL
+
+3. **Seated Customers** (seatedCustomersHead)
+   - SeatedCustomer → SeatedCustomer → NULL
+
+4. **Menu Items** (BST - existing)
+   - Binary Search Tree for menu items
+
+5. **Waiting Queue** (existing)
+   - QUEUE → QUEUE → NULL
+
+---
+
+## IMPROVEMENTS MADE
+
+1. Better customer tracking with unique IDs
+2. Complete transaction history with order IDs
+3. Analytics capability (popular items)
+4. Order lookup functionality
+5. Proper validation (only seated customers can order)
+6. Professional receipt format
+7. Ready for CLion IDE with CMakeLists.txt
+
+---
+
+END OF DOCUMENT

@@ -2,20 +2,7 @@
 #include <string.h>
 #include "customer.h"
 #include "menu.h"
-
-void print_bill(char names[][100], int qtys[], float prices[], int count) {
-    float total = 0.0f;
-    int i;
-    printf("\nItem Name                 Qty   Price      Line Total\n");
-    printf("\n");
-    for (i = 0; i < count; i++) {
-        float line = qtys[i] * prices[i];
-        total += line;
-        printf("%-25s %4d  Rs.%-8.2f Rs.%-8.2f\n", names[i], qtys[i], prices[i], line);
-    }
-    printf("\n");
-    printf("Grand Total: Rs.%.2f\n\n", total);
-}
+#include "order.h"
 
 int main() {
     int choice;
@@ -36,6 +23,7 @@ int main() {
     root = addItem(root, "Sandwich", 60, 18);
 
     while (1) {
+        printf("\n========== RU HUNGRY MENU ==========");
         printf("\n1. Customer Arrives");
         printf("\n2. Customer Leaves");
         printf("\n3. Show Seating Status");
@@ -43,7 +31,11 @@ int main() {
         printf("\n5. Add Menu Item");
         printf("\n6. Delete Menu Item");
         printf("\n7. Place Order (Bill)");
+        printf("\n8. Find Order by ID");
+        printf("\n9. Get Popular Items");
+        printf("\n10. Show Seated Customers");
         printf("\n0. Exit");
+        printf("\n====================================");
         printf("\nEnter your choice: ");
         if (scanf("%d", &choice) != 1) break;
         getchar();
@@ -80,11 +72,22 @@ int main() {
             root = deleteItem(root, name);
         } 
         else if (choice == 7) {
-            char bill_names[50][100];
-            int  bill_qtys[50];
-            float bill_prices[50];
-            int bill_count = 0;
-
+            int customerID;
+            printf("Enter Customer ID: ");
+            if (scanf("%d", &customerID) != 1) {
+                getchar();
+                printf("Invalid Customer ID\n");
+                continue;
+            }
+            getchar();
+            
+            if (!isCustomerSeated(customerID)) {
+                printf("Customer ID %d is not seated. Cannot place order.\n", customerID);
+                continue;
+            }
+            
+            Order *order = createOrder(customerID);
+            
             while (1) {
                 printf("Enter item name (or 'done' to finish): ");
                 fgets(name, sizeof(name), stdin);
@@ -107,18 +110,50 @@ int main() {
                 }
 
                 updateStock(root, name, qty);
-                strcpy(bill_names[bill_count], name);
-                bill_qtys[bill_count] = qty;
-                bill_prices[bill_count] = item->price;
-                bill_count++;
+                addItemToOrder(order, name, qty, item->price);
                 printf("Added to bill\n");
             }
 
-            if (bill_count > 0) {
-                print_bill(bill_names, bill_qtys, bill_prices, bill_count);
+            if (order->items != NULL) {
+                saveOrder(order);
+                displayOrder(order);
+                printf("Order ID: %02d has been placed successfully!\n", order->orderID);
             } else {
                 printf("No items ordered\n");
+                free(order);
             }
+        }
+        else if (choice == 8) {
+            int orderID;
+            printf("Enter Order ID: ");
+            if (scanf("%d", &orderID) != 1) {
+                getchar();
+                printf("Invalid Order ID\n");
+                continue;
+            }
+            getchar();
+            
+            Order *foundOrder = findOrder(orderID);
+            if (foundOrder != NULL) {
+                displayOrder(foundOrder);
+            } else {
+                printf("Order ID %02d not found!\n", orderID);
+            }
+        }
+        else if (choice == 9) {
+            int k;
+            printf("Enter number of top items to display: ");
+            if (scanf("%d", &k) != 1) {
+                getchar();
+                printf("Invalid input\n");
+                continue;
+            }
+            getchar();
+            
+            getPopularItems(k);
+        }
+        else if (choice == 10) {
+            displaySeatedCustomers();
         } 
         else if (choice == 0) {
             break;
