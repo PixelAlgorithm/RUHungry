@@ -74,6 +74,6 @@ make
 - Language: C
 - Data Structures: Queue, Binary Search Tree
 
-## Author
 
-DSA Project - Restaurant Management System
+ 
+
