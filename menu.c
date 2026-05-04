@@ -5,6 +5,7 @@ MenuItem* createMenuItem(char name[], float price, int stock) {
     if (!newNode) {
         printf("Memory allocation failed!\n");
         exit(1);
+    
     }
     strcpy(newNode->itemName, name);
     newNode->price = price;
